@@ -1,0 +1,98 @@
+import pandas as pd
+import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, Binarizer, LabelEncoder
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+
+# Load air quality dataset
+air = pd.read_csv('airquality.csv')
+
+# Basic exploration
+print(air.shape)
+print(air.head())
+print(air.count())
+print(air.isnull().sum())
+print(air.describe())
+print(air.info())
+
+# Handling missing values
+A = air.dropna()
+print(A.shape)
+
+A = air.fillna(0)
+print(A.shape)
+print(A.head())
+
+A = air.ffill()  # forward fill
+print(A.head())
+
+A = air.bfill()  # backward fill
+print(A.head())
+
+# Replace NaN in 'Ozone' with mean, median, and mode
+A = air['Ozone'].replace(np.NaN, air['Ozone'].mean())
+print(A.head())
+
+A = air['Ozone'].replace(np.NaN, air['Ozone'].median())
+print(A.head())
+
+A = air['Ozone'].replace(np.NaN, air['Ozone'].mode()[0])  # mode returns a series
+print(A.head())
+
+# Imputation with sklearn
+imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+A = imp.fit_transform(air)
+A = pd.DataFrame(A, columns=air.columns)
+print(A.head())
+
+# Train-test split
+print(len(A))
+train, test = train_test_split(A)
+print(len(train), len(test))
+print(train.head())
+
+train, test = train_test_split(A, test_size=0.20)
+print(len(train), len(test))
+
+# Data Scaling
+scaler = StandardScaler()
+B = scaler.fit_transform(A)
+print(pd.DataFrame(B).describe())
+
+scaler = MinMaxScaler()
+B = scaler.fit_transform(A)
+print(pd.DataFrame(B).describe())
+
+B = pd.DataFrame(B).describe()
+
+# Binarization
+bin = Binarizer(threshold=0.5)
+B = bin.fit_transform(B)
+print(pd.DataFrame(B))
+
+# Label encoding on student.csv
+data = pd.read_csv('student.csv')
+le = LabelEncoder()
+B = le.fit_transform(data['name'])
+print(B)
+
+B = data[:]
+B['name'] = le.fit_transform(B['name'])
+print(B)
+
+# Linear regression
+X = A['Ozone'].values.reshape(-1, 1)
+Y = A['Temp']
+model = LinearRegression()
+model.fit(X, Y)
+print("Model Score:", model.score(X, Y) * 100)
+print("Prediction for Ozone=128:", model.predict([[128]]))
+
+# Plotting
+plt.scatter(X, Y)
+plt.xlabel("Ozone")
+plt.ylabel("Temperature")
+plt.title("Ozone vs Temperature")
+plt.show()
